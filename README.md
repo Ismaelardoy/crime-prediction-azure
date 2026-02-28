@@ -1,6 +1,6 @@
 # Urban Crime Prediction with Azure & Open Data
 
-> > **Note:** The comprehensive final executive report included in the `docs/` folder is originally written in Spanish as it was presented as the final project for the Information Analysis for Big Data course. However, this README covers the complete technical architecture, methodologies, DAX logic, and business outcomes in English.
+> > **Note:** The comprehensive final executive report included in the `docs/` folder is originally written in Spanish as it was presented as the final project for the Information Analysis for Big Data Master's module. However, this README covers the complete technical architecture, methodologies, DAX logic, and business outcomes in English.
 
 ## Project Overview
 Traditional policing relies heavily on a reactive model—waiting for a 911 call. This project aims to shift towards a **preventive model** by validating the "Broken Windows Theory". By crossing NYC Open Data sets (311 citizen complaints regarding urban decay, specifically graffiti, vs. NYPD high-risk crime data), this project proves that environmental deterioration acts as an early warning signal for severe crime.
