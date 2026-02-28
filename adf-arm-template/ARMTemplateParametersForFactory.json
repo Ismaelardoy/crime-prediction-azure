@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "adf-nyc-ismael"
+        },
+        "ls_blob_nyc_connectionString": {
+            "value": ""
+        },
+        "ls_sql_nyc_password": {
+            "value": ""
+        },
+        "ls_sql_nyc_properties_typeProperties_server": {
+            "value": "srv-nyc-ismael.database.windows.net"
+        },
+        "ls_sql_nyc_properties_typeProperties_database": {
+            "value": "sql-nyc-ismael"
+        },
+        "ls_sql_nyc_properties_typeProperties_userName": {
+            "value": "adminuax"
+        }
+    }
+}

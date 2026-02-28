@@ -1,0 +1,791 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "adf-nyc-ismael"
+        },
+        "ls_blob_nyc_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'ls_blob_nyc'"
+        },
+        "ls_sql_nyc_password": {
+            "type": "secureString",
+            "metadata": "Secure string for 'password' of 'ls_sql_nyc'"
+        },
+        "ls_sql_nyc_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "srv-nyc-ismael.database.windows.net"
+        },
+        "ls_sql_nyc_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "sql-nyc-ismael"
+        },
+        "ls_sql_nyc_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "adminuax"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_blob_nyc')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "linked service para conectar blob con data factory",
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('ls_blob_nyc_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ls_sql_nyc')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "linked service para conectar SQL a Data Factory",
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "server": "[parameters('ls_sql_nyc_properties_typeProperties_server')]",
+                    "database": "[parameters('ls_sql_nyc_properties_typeProperties_database')]",
+                    "encrypt": "mandatory",
+                    "trustServerCertificate": false,
+                    "authenticationType": "SQL",
+                    "userName": "[parameters('ls_sql_nyc_properties_typeProperties_userName')]",
+                    "password": {
+                        "type": "SecureString",
+                        "value": "[parameters('ls_sql_nyc_password')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/dataflow1')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "ds_crimenes",
+                                "type": "DatasetReference"
+                            },
+                            "name": "FuenteCrimenes"
+                        },
+                        {
+                            "dataset": {
+                                "referenceName": "ds_quejas",
+                                "type": "DatasetReference"
+                            },
+                            "name": "FuenteQuejas"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "ds_sql_crimenes",
+                                "type": "DatasetReference"
+                            },
+                            "name": "DestinoSQLCrimenes"
+                        },
+                        {
+                            "dataset": {
+                                "referenceName": "ds_sql_quejas",
+                                "type": "DatasetReference"
+                            },
+                            "name": "DestinoSQLQuejas"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "LimpiarDatosCrimen"
+                        },
+                        {
+                            "name": "LimpiarDatosQuejas"
+                        },
+                        {
+                            "name": "EliminarColumnasCrimen"
+                        },
+                        {
+                            "name": "EliminarColumnasQuejas"
+                        },
+                        {
+                            "name": "FiltrarNulosCrimen"
+                        },
+                        {
+                            "name": "FiltrarNulosQuejas"
+                        }
+                    ],
+                    "scriptLines": [
+                        "source(output(",
+                        "          CMPLNT_NUM as string,",
+                        "          ADDR_PCT_CD as string,",
+                        "          BORO_NM as string,",
+                        "          CMPLNT_FR_DT as string,",
+                        "          CMPLNT_FR_TM as string,",
+                        "          CMPLNT_TO_DT as string,",
+                        "          CMPLNT_TO_TM as string,",
+                        "          CRM_ATPT_CPTD_CD as string,",
+                        "          HADEVELOPT as string,",
+                        "          HOUSING_PSA as string,",
+                        "          JURISDICTION_CODE as string,",
+                        "          JURIS_DESC as string,",
+                        "          KY_CD as string,",
+                        "          LAW_CAT_CD as string,",
+                        "          LOC_OF_OCCUR_DESC as string,",
+                        "          OFNS_DESC as string,",
+                        "          PARKS_NM as string,",
+                        "          PATROL_BORO as string,",
+                        "          PD_CD as string,",
+                        "          PD_DESC as string,",
+                        "          PREM_TYP_DESC as string,",
+                        "          RPT_DT as string,",
+                        "          STATION_NAME as string,",
+                        "          SUSP_AGE_GROUP as string,",
+                        "          SUSP_RACE as string,",
+                        "          SUSP_SEX as string,",
+                        "          TRANSIT_DISTRICT as string,",
+                        "          VIC_AGE_GROUP as string,",
+                        "          VIC_RACE as string,",
+                        "          VIC_SEX as string,",
+                        "          X_COORD_CD as string,",
+                        "          Y_COORD_CD as string,",
+                        "          Latitude as string,",
+                        "          Longitude as string,",
+                        "          Lat_Lon as string,",
+                        "          {New Georeferenced Column} as string",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false) ~> FuenteCrimenes",
+                        "source(output(",
+                        "          {Unique Key} as string,",
+                        "          {Created Date} as string,",
+                        "          {Closed Date} as string,",
+                        "          Agency as string,",
+                        "          {Agency Name} as string,",
+                        "          {Problem (formerly Complaint Type)} as string,",
+                        "          {Problem Detail (formerly Descriptor)} as string,",
+                        "          {Additional Details} as string,",
+                        "          {Location Type} as string,",
+                        "          {Incident Zip} as string,",
+                        "          {Incident Address} as string,",
+                        "          {Street Name} as string,",
+                        "          {Cross Street 1} as string,",
+                        "          {Cross Street 2} as string,",
+                        "          {Intersection Street 1} as string,",
+                        "          {Intersection Street 2} as string,",
+                        "          {Address Type} as string,",
+                        "          City as string,",
+                        "          Landmark as string,",
+                        "          {Facility Type} as string,",
+                        "          Status as string,",
+                        "          {Due Date} as string,",
+                        "          {Resolution Description} as string,",
+                        "          {Resolution Action Updated Date} as string,",
+                        "          {Community Board} as string,",
+                        "          {Council District} as string,",
+                        "          {Police Precinct} as string,",
+                        "          BBL as string,",
+                        "          Borough as string,",
+                        "          {X Coordinate (State Plane)} as string,",
+                        "          {Y Coordinate (State Plane)} as string,",
+                        "          {Open Data Channel Type} as string,",
+                        "          {Park Facility Name} as string,",
+                        "          {Park Borough} as string,",
+                        "          {Vehicle Type} as string,",
+                        "          {Taxi Company Borough} as string,",
+                        "          {Taxi Pick Up Location} as string,",
+                        "          {Bridge Highway Name} as string,",
+                        "          {Bridge Highway Direction} as string,",
+                        "          {Road Ramp} as string,",
+                        "          {Bridge Highway Segment} as string,",
+                        "          Latitude as string,",
+                        "          Longitude as string,",
+                        "          Location as string",
+                        "     ),",
+                        "     allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     ignoreNoFilesFound: false) ~> FuenteQuejas",
+                        "FuenteCrimenes derive(Fecha_Real = coalesce(\r",
+                        "    toDate(CMPLNT_FR_DT, 'MM/dd/yyyy'),\r",
+                        "    toDate(CMPLNT_FR_DT, 'dd/MM/yyyy'),\r",
+                        "    toDate(CMPLNT_FR_DT, 'yyyy-MM-dd'),\r",
+                        "    toDate(CMPLNT_FR_DT, 'yyyy/MM/dd'),\r",
+                        "    toDate(CMPLNT_FR_DT, 'dd-MM-yyyy'),\r",
+                        "    toDate(CMPLNT_FR_DT, 'MM-dd-yyyy')\r",
+                        "),",
+                        "          Mes_Analisis = toString(toDate(CMPLNT_FR_DT, 'MM/dd/yyyy'), 'yyyy-MM'),",
+                        "          ID_Zona = toString(toInteger(ADDR_PCT_CD)),",
+                        "          Indice_Criminalidad = case(\r",
+                        "    LAW_CAT_CD == 'FELONY', 10,\r",
+                        "    LAW_CAT_CD == 'MISDEMEANOR', 3,\r",
+                        "    LAW_CAT_CD == 'VIOLATION', 1,\r",
+                        "    0\r",
+                        "),",
+                        "          Tipo_Riesgo = iif(LAW_CAT_CD == 'FELONY', 'ALTO RIESGO', 'BAJO RIESGO'),",
+                        "          Latitude = toDouble(replace(Latitude, ',', '.')),",
+                        "          Longitude = toDouble(replace(Longitude, ',', '.'))) ~> LimpiarDatosCrimen",
+                        "FuenteQuejas derive(Fecha_Real = coalesce(\r",
+                        "    toDate({Created Date}, 'MM/dd/yyyy'),\r",
+                        "    toDate({Created Date}, 'dd/MM/yyyy')\r",
+                        "),",
+                        "          Mes_Analisis = toString(toDate({Created Date}, 'MM/dd/yyyy'), 'yyyy-MM'),",
+                        "          ID_Zona = toString(toInteger(replace(replace({Police Precinct}, 'Precinct', ''), ' ', ''))),",
+                        "          Indice_VentanasRotas = case(\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%GRAFFITI%'), 5,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%DRUG%'), 5,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%DIRTY%'), 4,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%DUMPING%'), 4,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%ABANDONED%'), 3,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%DERELICT%'), 3,\r",
+                        "    like(upper({Problem (formerly Complaint Type)}), '%LOT CONDITION%'), 2,\r",
+                        "    0\r",
+                        "),",
+                        "          Tipo_Problema_Visual = upper({Problem (formerly Complaint Type)}),",
+                        "          Latitude = toDouble(replace(Latitude, ',', '.')),",
+                        "          Longitude = toDouble(replace(Longitude, ',', '.'))) ~> LimpiarDatosQuejas",
+                        "FiltrarNulosCrimen select(mapColumn(",
+                        "          Fecha = Fecha_Real,",
+                        "          Mes_Analisis,",
+                        "          Barrio = BORO_NM,",
+                        "          ID_Zona,",
+                        "          Indice_Criminalidad,",
+                        "          Tipo_Riesgo,",
+                        "          Latitud = Latitude,",
+                        "          Longitud = Longitude",
+                        "     ),",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> EliminarColumnasCrimen",
+                        "FiltrarNulosQuejas select(mapColumn(",
+                        "          Fecha = Fecha_Real,",
+                        "          Mes_Analisis,",
+                        "          Barrio = Borough,",
+                        "          ID_Zona,",
+                        "          Indice_Deterioro = Indice_VentanasRotas,",
+                        "          Tipo_Problema = Tipo_Problema_Visual,",
+                        "          Latitud = Latitude,",
+                        "          Longitud = Longitude",
+                        "     ),",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true) ~> EliminarColumnasQuejas",
+                        "LimpiarDatosCrimen filter(!isNull(ID_Zona) && !isNull(Fecha_Real) && !isNull(Latitude) && !isNull(Longitude) && !isNull(BORO_NM) && !isNull(Mes_Analisis) && !isNull(Indice_Criminalidad) && !isNull(Tipo_Riesgo) && Latitude != 0 && Longitude != 0) ~> FiltrarNulosCrimen",
+                        "LimpiarDatosQuejas filter(!isNull(ID_Zona) && !isNull(Fecha_Real) && !isNull(Latitude) && !isNull(Longitude) && !isNull(Borough) && !isNull(Mes_Analisis) && !isNull(Indice_VentanasRotas) && !isNull(Tipo_Problema_Visual) && Latitude != 0 && Longitude != 0) ~> FiltrarNulosQuejas",
+                        "EliminarColumnasCrimen sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     deletable:false,",
+                        "     insertable:true,",
+                        "     updateable:false,",
+                        "     upsertable:false,",
+                        "     recreate:true,",
+                        "     format: 'table',",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true,",
+                        "     errorHandlingOption: 'stopOnFirstError') ~> DestinoSQLCrimenes",
+                        "EliminarColumnasQuejas sink(allowSchemaDrift: true,",
+                        "     validateSchema: false,",
+                        "     deletable:false,",
+                        "     insertable:true,",
+                        "     updateable:false,",
+                        "     upsertable:false,",
+                        "     recreate:true,",
+                        "     format: 'table',",
+                        "     skipDuplicateMapInputs: true,",
+                        "     skipDuplicateMapOutputs: true,",
+                        "     errorHandlingOption: 'stopOnFirstError') ~> DestinoSQLQuejas"
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/ds_crimenes')]",
+                "[concat(variables('factoryId'), '/datasets/ds_quejas')]",
+                "[concat(variables('factoryId'), '/datasets/ds_sql_crimenes')]",
+                "[concat(variables('factoryId'), '/datasets/ds_sql_quejas')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl_carga_datos')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "pipeline",
+                "activities": [
+                    {
+                        "name": "Data flow1",
+                        "type": "ExecuteDataFlow",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataflow": {
+                                "referenceName": "dataflow1",
+                                "type": "DataFlowReference",
+                                "parameters": {},
+                                "datasetParameters": {
+                                    "FuenteCrimenes": {},
+                                    "FuenteQuejas": {},
+                                    "DestinoSQLCrimenes": {},
+                                    "DestinoSQLQuejas": {}
+                                }
+                            },
+                            "staging": {},
+                            "compute": {
+                                "coreCount": 8,
+                                "computeType": "General"
+                            },
+                            "traceLevel": "Fine"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2026-01-12T10:55:49Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/dataflows/dataflow1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_crimenes')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_blob_nyc",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": "criminalidad.csv",
+                        "container": "datos-crudos"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "CMPLNT_NUM",
+                        "type": "String"
+                    },
+                    {
+                        "name": "ADDR_PCT_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "BORO_NM",
+                        "type": "String"
+                    },
+                    {
+                        "name": "CMPLNT_FR_DT",
+                        "type": "String"
+                    },
+                    {
+                        "name": "CMPLNT_FR_TM",
+                        "type": "String"
+                    },
+                    {
+                        "name": "CMPLNT_TO_DT",
+                        "type": "String"
+                    },
+                    {
+                        "name": "CMPLNT_TO_TM",
+                        "type": "String"
+                    },
+                    {
+                        "name": "CRM_ATPT_CPTD_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "HADEVELOPT",
+                        "type": "String"
+                    },
+                    {
+                        "name": "HOUSING_PSA",
+                        "type": "String"
+                    },
+                    {
+                        "name": "JURISDICTION_CODE",
+                        "type": "String"
+                    },
+                    {
+                        "name": "JURIS_DESC",
+                        "type": "String"
+                    },
+                    {
+                        "name": "KY_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "LAW_CAT_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "LOC_OF_OCCUR_DESC",
+                        "type": "String"
+                    },
+                    {
+                        "name": "OFNS_DESC",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PARKS_NM",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PATROL_BORO",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PD_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PD_DESC",
+                        "type": "String"
+                    },
+                    {
+                        "name": "PREM_TYP_DESC",
+                        "type": "String"
+                    },
+                    {
+                        "name": "RPT_DT",
+                        "type": "String"
+                    },
+                    {
+                        "name": "STATION_NAME",
+                        "type": "String"
+                    },
+                    {
+                        "name": "SUSP_AGE_GROUP",
+                        "type": "String"
+                    },
+                    {
+                        "name": "SUSP_RACE",
+                        "type": "String"
+                    },
+                    {
+                        "name": "SUSP_SEX",
+                        "type": "String"
+                    },
+                    {
+                        "name": "TRANSIT_DISTRICT",
+                        "type": "String"
+                    },
+                    {
+                        "name": "VIC_AGE_GROUP",
+                        "type": "String"
+                    },
+                    {
+                        "name": "VIC_RACE",
+                        "type": "String"
+                    },
+                    {
+                        "name": "VIC_SEX",
+                        "type": "String"
+                    },
+                    {
+                        "name": "X_COORD_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Y_COORD_CD",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Latitude",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Longitude",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Lat_Lon",
+                        "type": "String"
+                    },
+                    {
+                        "name": "New Georeferenced Column",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_blob_nyc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_quejas')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "ls_blob_nyc",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "DelimitedText",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": "quejas.csv",
+                        "container": "datos-crudos"
+                    },
+                    "columnDelimiter": ",",
+                    "escapeChar": "\\",
+                    "firstRowAsHeader": true,
+                    "quoteChar": "\""
+                },
+                "schema": [
+                    {
+                        "name": "Unique Key",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Created Date",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Closed Date",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Agency",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Agency Name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Problem (formerly Complaint Type)",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Problem Detail (formerly Descriptor)",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Additional Details",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Location Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Incident Zip",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Incident Address",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Street Name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Cross Street 1",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Cross Street 2",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Intersection Street 1",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Intersection Street 2",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Address Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "City",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Landmark",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Facility Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Status",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Due Date",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Resolution Description",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Resolution Action Updated Date",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Community Board",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Council District",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Police Precinct",
+                        "type": "String"
+                    },
+                    {
+                        "name": "BBL",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Borough",
+                        "type": "String"
+                    },
+                    {
+                        "name": "X Coordinate (State Plane)",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Y Coordinate (State Plane)",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Open Data Channel Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Park Facility Name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Park Borough",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Vehicle Type",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Taxi Company Borough",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Taxi Pick Up Location",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Bridge Highway Name",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Bridge Highway Direction",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Road Ramp",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Bridge Highway Segment",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Latitude",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Longitude",
+                        "type": "String"
+                    },
+                    {
+                        "name": "Location",
+                        "type": "String"
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_blob_nyc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_sql_crimenes')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Destino sql de crimenes",
+                "linkedServiceName": {
+                    "referenceName": "ls_sql_nyc",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "TablaCrimenes"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_sql_nyc')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ds_sql_quejas')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "destino para sql quejas",
+                "linkedServiceName": {
+                    "referenceName": "ls_sql_nyc",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "TablaQuejas"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/ls_sql_nyc')]"
+            ]
+        }
+    ]
+}
